@@ -1,11 +1,10 @@
-const Sauce = require('../models/sauce');
+const Sauce = require('../models/Sauce');
 const fs = require('fs');
-const sauce = require('../models/sauce');
+const sauce = require('../models/Sauce');
 
 exports.createSauce = (req, res, next) => {
     const sauceObject = JSON.parse(req.body.sauce);
     delete sauceObject._id;
-    // Ajouter like dislike à la sauce ici
     sauceObject.likes = 0;
     sauceObject.dislikes = 0;
     sauceObject.usersLiked = [];
@@ -88,7 +87,8 @@ exports.likeSauce = (req, res, next) => {
                 case 1:
                     if (sauceToTest.usersLiked.indexOf(req.body.userId) === -1) {
                         sauceToTest.usersLiked.push(req.body.userId);
-                        Sauce.updateOne({_id: req.params.id}, { ...sauceToTest, _id: req.params.id })
+                        sauceToTest.likes = sauceToTest.usersLiked.length;
+                        Sauce.updateOne({_id: req.params.id}, sauceToTest)
                         .then(() => {
                             res.status(201).json({ message : "Sauce liked!" });
                         })
@@ -99,15 +99,19 @@ exports.likeSauce = (req, res, next) => {
                         throw new switchException("User already likes this sauce!", 200);
                     };
                     break;
-                /*case 0:
-                    if ((userToRemoveIndex = sauce.usersLiked.indexOf(req.body.userId)) !== -1) {
-                        sauce.usersLiked.splice(userToRemoveIndex, 1)
-                        then(() => {
+                case 0:
+                    if ((userToRemoveIndex = sauceToTest.usersLiked.indexOf(req.body.userId)) !== -1) {
+                        sauceToTest.usersLiked.splice(userToRemoveIndex, 1)
+                        sauceToTest.likes = sauceToTest.usersLiked.length;
+                        Sauce.updateOne({_id: req.params.id}, sauceToTest)
+                        .then(() => {
                             res.status(201).json({ message : "Sauce unliked!" });
                         });
-                    } else if ((userToRemoveIndex = sauce.usersDisliked.indexOf(req.body.userId)) !== -1) {
-                        sauce.usersDisliked.splice(userToRemoveIndex, 1)
-                        then(() => {
+                    } else if ((userToRemoveIndex = sauceToTest.usersDisliked.indexOf(req.body.userId)) !== -1) {
+                        sauceToTest.usersDisliked.splice(userToRemoveIndex, 1)
+                        sauceToTest.dislikes = sauceToTest.usersDisliked.length;
+                        Sauce.updateOne({_id: req.params.id}, sauceToTest)
+                        .then(() => {
                             res.status(201).json({ message : "Sauce un-disliked!" });
                         });
                     } else {
@@ -115,15 +119,17 @@ exports.likeSauce = (req, res, next) => {
                     };
                     break;
                 case -1:
-                    if (sauce.usersDisliked.indexOf(req.body.userId) === -1) {
-                        sauce.usersDisliked.push(req.body.userId)
-                        then(() => {
-                            res.status(201).json({ message : "Sauce liked!" });
+                    if (sauceToTest.usersDisliked.indexOf(req.body.userId) === -1) {
+                        sauceToTest.usersDisliked.push(req.body.userId)
+                        sauceToTest.dislikes = sauceToTest.usersDisliked.length;
+                        Sauce.updateOne({_id: req.params.id}, sauceToTest)
+                        .then(() => {
+                            res.status(201).json({ message : "Sauce disliked!" });
                         });
                     } else {
                         throw new switchException("User already dislikes this sauce!", 200);
                     };
-                    break*/
+                    break
                 default:
                     throw new switchException("Like value is incorrect.", 400);
             }

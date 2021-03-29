@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+
+// Modèle de sauce utilisé pour la création d'objets sauce dans la base de données
 const sauceSchema = mongoose.Schema({
     userId: { type: String, required: true },
     name: { type: String, required: true },

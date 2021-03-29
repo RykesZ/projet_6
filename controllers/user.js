@@ -16,6 +16,8 @@ exports.signup = (req, res, next) => {
     .catch(error => res.status(500).json({ error }));
 };
 
+
+// Le token utilisé 'RANDOM_TOKEN_SECRET' est à remplacer par une chaîne aléatoire beaucoup plus longue une fois en prod
 exports.login = (req, res, next) => {
     User.findOne({ email: req.body.email })
       .then(user => {
@@ -53,18 +55,29 @@ exports.modifyUser = (req, res, next) => {
           }
           bcrypt.hash(req.body.newPassword, 10)
             .then(hash => {
-              const password = hash;
-              User.updateOne({ _id: req.body.userId}, password)
+              let userToModify = user;
+              userToModify.password = hash;
+              User.updateOne({ _id: req.body.userId }, userToModify)
+              .then(() => {
+                res.status(201).json({ message : "Password modified!" });
+              })
+              .catch((error) => {
+                res.status(409).json({ error: error });
+              });
             })
-            .catch(error => res.status(500).json({ error }));
+            .catch(error => res.status(500).json({ error: error }));
         })
-        .catch(error => res.status(500).json({ error }));
+        .catch(error => res.status(500).json({ error: error }));
   })
-  .catch(error => res.status(500).json({ error }));
+  .catch(error => res.status(500).json({ error: error }));
 };
 
 
-// Sécurité par mot de passe : l'utilisateur doit taper son mot de passe pour confirmer la suppression de son compte
+/* Sécurité par mot de passe : l'utilisateur doit taper son mot de passe pour confirmer la suppression de son compte
+ Pour s'assurer que les likes et dislikes associés à l'utilisateur soient bien supprimés en même temps que le compte, il faudra
+ que le frontend développe une fonctionnalité qui enverra une requête likeSauce avec like = 0 à toutes les sauces
+ OU ajouter un array à l'utilisateur qui stockera l'id de toutes les sauces likées/dislikées qui servira à l'envoi de requêtes likeSauce
+ ciblées avec like = 0 de la part du frontend */
 exports.deleteUser = (req, res, next) => {
   User.findOne({ _id: req.body.userId })
     .then(user => {
@@ -73,7 +86,7 @@ exports.deleteUser = (req, res, next) => {
           if (!valid) {
             return res.status(401).json({ error: 'Mot de passe incorrect !' });
           }
-          User.deleteOne({ _id: req.params.userId })
+          User.deleteOne({ _id: req.body.userId })
             .then(() => {
               res.status(200).json({ message: 'Compte supprimé !' });
             });
